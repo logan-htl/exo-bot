@@ -1,8 +1,7 @@
 name: Collect Lambda logs
 
 on:
-  schedule:
-    - cron: '5 * * * *'
+  workflow_dispatch:
 
 concurrency:
   group: collect-lambda-logs
@@ -33,7 +32,7 @@ jobs:
           LAMBDA_REPORTS_CHECKPOINT_MS: ${{ vars.LAMBDA_REPORTS_CHECKPOINT_MS }}
           DEPLOYMENT_ENVIRONMENT: ${{ vars.DEPLOYMENT_ENVIRONMENT }}
           OTEL_EXPORTER_OTLP_ENDPOINT: ${{ vars.OTEL_EXPORTER_OTLP_ENDPOINT }}
-          OTEL_EXPORTER_OTLP_HEADERS: ${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}
+          OTEL_EXPORTER_OTLP_HEADERS: Authorization=Basic%20${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}
         run: |
           chmod +x bin/collect_lambda_logs
           ./bin/collect_lambda_logs
@@ -41,5 +40,5 @@ jobs:
       - name: Save the new checkpoint
         if: steps.collect.outputs.checkpoint_ms != ''
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.CHECKPOINT_TOKEN }}
         run: gh variable set LAMBDA_REPORTS_CHECKPOINT_MS --body "${{ steps.collect.outputs.checkpoint_ms }}"
