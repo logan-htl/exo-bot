@@ -16,17 +16,111 @@
   ],
   "timezone": "utc",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 4,
   "editable": true,
   "time": {
     "from": "now-30d",
     "to": "now"
   },
+  "templating": {
+    "list": [
+      {
+        "name": "mem_window",
+        "label": "Khoảng thời gian: Memory còn trống thấp nhất (%)",
+        "type": "custom",
+        "query": "1d,7d,30d",
+        "current": {
+          "text": "1 ngày",
+          "value": "1d"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "1 ngày",
+            "value": "1d"
+          },
+          {
+            "selected": false,
+            "text": "1 tuần",
+            "value": "7d"
+          },
+          {
+            "selected": false,
+            "text": "1 tháng",
+            "value": "30d"
+          }
+        ],
+        "multi": false,
+        "includeAll": false,
+        "hide": 0
+      },
+      {
+        "name": "init_window",
+        "label": "Khoảng thời gian: Init duration lớn nhất (ms)",
+        "type": "custom",
+        "query": "1d,7d,30d",
+        "current": {
+          "text": "1 ngày",
+          "value": "1d"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "1 ngày",
+            "value": "1d"
+          },
+          {
+            "selected": false,
+            "text": "1 tuần",
+            "value": "7d"
+          },
+          {
+            "selected": false,
+            "text": "1 tháng",
+            "value": "30d"
+          }
+        ],
+        "multi": false,
+        "includeAll": false,
+        "hide": 0
+      },
+      {
+        "name": "billed_window",
+        "label": "Khoảng thời gian: Billed duration lớn nhất (ms)",
+        "type": "custom",
+        "query": "1d,7d,30d",
+        "current": {
+          "text": "1 ngày",
+          "value": "1d"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "1 ngày",
+            "value": "1d"
+          },
+          {
+            "selected": false,
+            "text": "1 tuần",
+            "value": "7d"
+          },
+          {
+            "selected": false,
+            "text": "1 tháng",
+            "value": "30d"
+          }
+        ],
+        "multi": false,
+        "includeAll": false,
+        "hide": 0
+      }
+    ]
+  },
   "panels": [
     {
       "id": 1,
-      "type": "table",
-      "title": "Memory còn trống thấp nhất (%) — 1 ngày",
+      "type": "barchart",
+      "title": "Memory còn trống thấp nhất (%)",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -34,25 +128,83 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "bottomk(10, min by (service_name) (min_over_time({service_name=~\".+\"} | unwrap memory_free_pct [1d])))",
+          "expr": "bottomk(10, min by (service_name) (min_over_time({service_name=~\".+\"} | unwrap memory_free_pct [${mem_window}])))",
           "queryType": "instant",
           "editorMode": "code"
         }
       ],
       "gridPos": {
-        "h": 9,
-        "w": 8,
+        "h": 12,
+        "w": 24,
         "x": 0,
         "y": 0
       },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 10
+              },
+              {
+                "color": "green",
+                "value": 30
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Value #A",
+                "desc": false
+              }
+            ]
+          }
+        }
+      ],
       "options": {
-        "showHeader": true
+        "orientation": "horizontal",
+        "xField": "service_name",
+        "showValue": "auto",
+        "legend": {
+          "showLegend": false,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "stacking": "none"
       }
     },
     {
       "id": 2,
-      "type": "table",
-      "title": "Memory còn trống thấp nhất (%) — 1 tuần",
+      "type": "barchart",
+      "title": "Tổng memory cấu hình (MB), top 10",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -60,25 +212,63 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "bottomk(10, min by (service_name) (min_over_time({service_name=~\".+\"} | unwrap memory_free_pct [7d])))",
+          "expr": "topk(10, max by (service_name) (max_over_time({service_name=~\".+\"} | unwrap memory_size_mb [${mem_window}])))",
           "queryType": "instant",
           "editorMode": "code"
         }
       ],
       "gridPos": {
-        "h": 9,
-        "w": 8,
-        "x": 8,
-        "y": 0
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 12
       },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "decmbytes"
+        },
+        "overrides": []
+      },
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Value #A",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ],
       "options": {
-        "showHeader": true
+        "orientation": "horizontal",
+        "xField": "service_name",
+        "showValue": "auto",
+        "legend": {
+          "showLegend": false,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "stacking": "none"
       }
     },
     {
       "id": 3,
-      "type": "table",
-      "title": "Memory còn trống thấp nhất (%) — 1 tháng",
+      "type": "barchart",
+      "title": "Init duration lớn nhất (ms)",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -86,25 +276,63 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "bottomk(10, min by (service_name) (min_over_time({service_name=~\".+\"} | unwrap memory_free_pct [30d])))",
+          "expr": "topk(10, max by (service_name) (max_over_time({service_name=~\".+\"} | unwrap init_duration_ms [${init_window}])))",
           "queryType": "instant",
           "editorMode": "code"
         }
       ],
       "gridPos": {
-        "h": 9,
-        "w": 8,
-        "x": 16,
-        "y": 0
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 24
       },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Value #A",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ],
       "options": {
-        "showHeader": true
+        "orientation": "horizontal",
+        "xField": "service_name",
+        "showValue": "auto",
+        "legend": {
+          "showLegend": false,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "stacking": "none"
       }
     },
     {
       "id": 4,
-      "type": "table",
-      "title": "Init duration lớn nhất (ms) — 1 ngày",
+      "type": "barchart",
+      "title": "Billed duration lớn nhất (ms)",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -112,149 +340,57 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "topk(10, max by (service_name) (max_over_time({service_name=~\".+\"} | unwrap init_duration_ms [1d])))",
+          "expr": "topk(10, max by (service_name) (max_over_time({service_name=~\".+\"} | unwrap billed_duration_ms [${billed_window}])))",
           "queryType": "instant",
           "editorMode": "code"
         }
       ],
       "gridPos": {
-        "h": 9,
-        "w": 8,
+        "h": 12,
+        "w": 24,
         "x": 0,
-        "y": 9
+        "y": 36
       },
-      "options": {
-        "showHeader": true
-      }
-    },
-    {
-      "id": 5,
-      "type": "table",
-      "title": "Init duration lớn nhất (ms) — 1 tuần",
-      "datasource": {
-        "type": "loki",
-        "uid": "${DS_LOKI}"
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": []
       },
-      "targets": [
+      "transformations": [
         {
-          "refId": "A",
-          "expr": "topk(10, max by (service_name) (max_over_time({service_name=~\".+\"} | unwrap init_duration_ms [7d])))",
-          "queryType": "instant",
-          "editorMode": "code"
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Value #A",
+                "desc": true
+              }
+            ]
+          }
         }
       ],
-      "gridPos": {
-        "h": 9,
-        "w": 8,
-        "x": 8,
-        "y": 9
-      },
       "options": {
-        "showHeader": true
-      }
-    },
-    {
-      "id": 6,
-      "type": "table",
-      "title": "Init duration lớn nhất (ms) — 1 tháng",
-      "datasource": {
-        "type": "loki",
-        "uid": "${DS_LOKI}"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "topk(10, max by (service_name) (max_over_time({service_name=~\".+\"} | unwrap init_duration_ms [30d])))",
-          "queryType": "instant",
-          "editorMode": "code"
-        }
-      ],
-      "gridPos": {
-        "h": 9,
-        "w": 8,
-        "x": 16,
-        "y": 9
-      },
-      "options": {
-        "showHeader": true
-      }
-    },
-    {
-      "id": 7,
-      "type": "table",
-      "title": "Billed duration lớn nhất (ms) — 1 ngày",
-      "datasource": {
-        "type": "loki",
-        "uid": "${DS_LOKI}"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "topk(10, max by (service_name) (max_over_time({service_name=~\".+\"} | unwrap billed_duration_ms [1d])))",
-          "queryType": "instant",
-          "editorMode": "code"
-        }
-      ],
-      "gridPos": {
-        "h": 9,
-        "w": 8,
-        "x": 0,
-        "y": 18
-      },
-      "options": {
-        "showHeader": true
-      }
-    },
-    {
-      "id": 8,
-      "type": "table",
-      "title": "Billed duration lớn nhất (ms) — 1 tuần",
-      "datasource": {
-        "type": "loki",
-        "uid": "${DS_LOKI}"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "topk(10, max by (service_name) (max_over_time({service_name=~\".+\"} | unwrap billed_duration_ms [7d])))",
-          "queryType": "instant",
-          "editorMode": "code"
-        }
-      ],
-      "gridPos": {
-        "h": 9,
-        "w": 8,
-        "x": 8,
-        "y": 18
-      },
-      "options": {
-        "showHeader": true
-      }
-    },
-    {
-      "id": 9,
-      "type": "table",
-      "title": "Billed duration lớn nhất (ms) — 1 tháng",
-      "datasource": {
-        "type": "loki",
-        "uid": "${DS_LOKI}"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "topk(10, max by (service_name) (max_over_time({service_name=~\".+\"} | unwrap billed_duration_ms [30d])))",
-          "queryType": "instant",
-          "editorMode": "code"
-        }
-      ],
-      "gridPos": {
-        "h": 9,
-        "w": 8,
-        "x": 16,
-        "y": 18
-      },
-      "options": {
-        "showHeader": true
+        "orientation": "horizontal",
+        "xField": "service_name",
+        "showValue": "auto",
+        "legend": {
+          "showLegend": false,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "stacking": "none"
       }
     }
   ]
