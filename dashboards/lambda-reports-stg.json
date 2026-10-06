@@ -8,15 +8,16 @@
       "pluginName": "Loki"
     }
   ],
-  "title": "Lambda reports — top 10",
-  "uid": "lambda-reports-top10",
+  "title": "Lambda reports — stg top 10",
+  "uid": "lambda-reports-stg",
   "tags": [
     "lambda",
-    "g-bot"
+    "g-bot",
+    "stg"
   ],
   "timezone": "utc",
   "schemaVersion": 39,
-  "version": 6,
+  "version": 7,
   "editable": true,
   "time": {
     "from": "now-30d",
@@ -128,19 +129,19 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "bottomk(10, min by (service_name) (min_over_time({service_name=~\".+\"} | unwrap memory_free_pct [${mem_window}])))",
+          "expr": "bottomk(10, min by (service_name) (min_over_time({deployment_environment_name=\"stg\", service_name=~\".+\"} | unwrap memory_free_pct [${mem_window}])))",
           "queryType": "instant",
           "editorMode": "code"
         },
         {
           "refId": "B",
-          "expr": "max by (service_name) (max_over_time({service_name=~\".+\"} | unwrap max_memory_used_mb [${mem_window}]))",
+          "expr": "max by (service_name) (max_over_time({deployment_environment_name=\"stg\", service_name=~\".+\"} | unwrap max_memory_used_mb [${mem_window}]))",
           "queryType": "instant",
           "editorMode": "code"
         },
         {
           "refId": "C",
-          "expr": "max by (service_name) (max_over_time({service_name=~\".+\"} | unwrap memory_size_mb [${mem_window}]))",
+          "expr": "max by (service_name) (max_over_time({deployment_environment_name=\"stg\", service_name=~\".+\"} | unwrap memory_size_mb [${mem_window}]))",
           "queryType": "instant",
           "editorMode": "code"
         }
@@ -340,7 +341,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "topk(10, max by (service_name) (max_over_time({service_name=~\".+\"} | unwrap init_duration_ms [${init_window}])))",
+          "expr": "topk(10, max by (service_name) (max_over_time({deployment_environment_name=\"stg\", service_name=~\".+\"} | unwrap init_duration_ms [${init_window}])))",
           "queryType": "instant",
           "editorMode": "code"
         }
@@ -404,7 +405,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "topk(10, max by (service_name) (max_over_time({service_name=~\".+\"} | unwrap billed_duration_ms [${billed_window}])))",
+          "expr": "topk(10, max by (service_name) (max_over_time({deployment_environment_name=\"stg\", service_name=~\".+\"} | unwrap billed_duration_ms [${billed_window}])))",
           "queryType": "instant",
           "editorMode": "code"
         }

@@ -1,0 +1,462 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_LOKI",
+      "label": "Loki",
+      "type": "datasource",
+      "pluginId": "loki",
+      "pluginName": "Loki"
+    }
+  ],
+  "title": "Lambda reports — prd top 10",
+  "uid": "lambda-reports-prd",
+  "tags": [
+    "lambda",
+    "g-bot",
+    "prd"
+  ],
+  "timezone": "utc",
+  "schemaVersion": 39,
+  "version": 7,
+  "editable": true,
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "mem_window",
+        "label": "Khoảng thời gian: Memory",
+        "type": "custom",
+        "query": "1d,7d,30d",
+        "current": {
+          "text": "1 ngày",
+          "value": "1d"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "1 ngày",
+            "value": "1d"
+          },
+          {
+            "selected": false,
+            "text": "1 tuần",
+            "value": "7d"
+          },
+          {
+            "selected": false,
+            "text": "1 tháng",
+            "value": "30d"
+          }
+        ],
+        "multi": false,
+        "includeAll": false,
+        "hide": 0
+      },
+      {
+        "name": "init_window",
+        "label": "Khoảng thời gian: Init duration",
+        "type": "custom",
+        "query": "1d,7d,30d",
+        "current": {
+          "text": "1 ngày",
+          "value": "1d"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "1 ngày",
+            "value": "1d"
+          },
+          {
+            "selected": false,
+            "text": "1 tuần",
+            "value": "7d"
+          },
+          {
+            "selected": false,
+            "text": "1 tháng",
+            "value": "30d"
+          }
+        ],
+        "multi": false,
+        "includeAll": false,
+        "hide": 0
+      },
+      {
+        "name": "billed_window",
+        "label": "Khoảng thời gian: Billed duration",
+        "type": "custom",
+        "query": "1d,7d,30d",
+        "current": {
+          "text": "1 ngày",
+          "value": "1d"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "1 ngày",
+            "value": "1d"
+          },
+          {
+            "selected": false,
+            "text": "1 tuần",
+            "value": "7d"
+          },
+          {
+            "selected": false,
+            "text": "1 tháng",
+            "value": "30d"
+          }
+        ],
+        "multi": false,
+        "includeAll": false,
+        "hide": 0
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "barchart",
+      "title": "Memory (MB): đã dùng đỉnh (xanh) và còn trống (xám), top 10 service ít trống nhất",
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "bottomk(10, min by (service_name) (min_over_time({deployment_environment_name=\"prd\", service_name=~\".+\"} | unwrap memory_free_pct [${mem_window}])))",
+          "queryType": "instant",
+          "editorMode": "code"
+        },
+        {
+          "refId": "B",
+          "expr": "max by (service_name) (max_over_time({deployment_environment_name=\"prd\", service_name=~\".+\"} | unwrap max_memory_used_mb [${mem_window}]))",
+          "queryType": "instant",
+          "editorMode": "code"
+        },
+        {
+          "refId": "C",
+          "expr": "max by (service_name) (max_over_time({deployment_environment_name=\"prd\", service_name=~\".+\"} | unwrap memory_size_mb [${mem_window}]))",
+          "queryType": "instant",
+          "editorMode": "code"
+        }
+      ],
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "decmbytes"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #A"
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "viz": true,
+                  "legend": true,
+                  "tooltip": true
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #C"
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "viz": true,
+                  "legend": true,
+                  "tooltip": true
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Đã dùng (%)"
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "viz": true,
+                  "legend": true,
+                  "tooltip": false
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Đã dùng (%)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Đã dùng (MB)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Còn trống (MB)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#8e8e8e"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "service_name",
+            "mode": "inner"
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "binary": {
+              "left": "Value #C",
+              "operator": "-",
+              "right": "Value #B"
+            },
+            "alias": "Còn trống (MB)",
+            "replaceFields": false
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "binary": {
+              "left": "Value #B",
+              "operator": "/",
+              "right": "Value #C"
+            },
+            "alias": "Đã dùng (%)",
+            "replaceFields": false
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "Value #B": "Đã dùng (MB)"
+            },
+            "indexByName": {
+              "Đã dùng (MB)": 0,
+              "Còn trống (MB)": 1
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Value #A",
+                "desc": false
+              }
+            ]
+          }
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "xField": "service_name",
+        "showValue": "never",
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "stacking": "normal"
+      }
+    },
+    {
+      "id": 2,
+      "type": "barchart",
+      "title": "Init duration lớn nhất (ms), top 10",
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(10, max by (service_name) (max_over_time({deployment_environment_name=\"prd\", service_name=~\".+\"} | unwrap init_duration_ms [${init_window}])))",
+          "queryType": "instant",
+          "editorMode": "code"
+        }
+      ],
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Value #A",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "xField": "service_name",
+        "showValue": "auto",
+        "legend": {
+          "showLegend": false,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "stacking": "none"
+      }
+    },
+    {
+      "id": 3,
+      "type": "barchart",
+      "title": "Billed duration lớn nhất (ms), top 10",
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(10, max by (service_name) (max_over_time({deployment_environment_name=\"prd\", service_name=~\".+\"} | unwrap billed_duration_ms [${billed_window}])))",
+          "queryType": "instant",
+          "editorMode": "code"
+        }
+      ],
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 24
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Value #A",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "xField": "service_name",
+        "showValue": "auto",
+        "legend": {
+          "showLegend": false,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "stacking": "none"
+      }
+    }
+  ]
+}
