@@ -3,10 +3,6 @@ name: Collect Lambda logs
 on:
   workflow_dispatch:
 
-concurrency:
-  group: collect-lambda-logs
-  cancel-in-progress: false
-
 permissions:
   id-token: write
   contents: read
@@ -15,6 +11,20 @@ permissions:
 jobs:
   collect:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # `suffix` picks the repo variables for each environment:
+        # stg uses LAMBDA_LOG_GROUP, prd uses LAMBDA_LOG_GROUP_PRD, and so on.
+        include:
+          - target: stg
+            suffix: ""
+          - target: prd
+            suffix: "_PRD"
+    # One run per environment at a time, so checkpoints never race.
+    concurrency:
+      group: collect-lambda-logs-${{ matrix.target }}
+      cancel-in-progress: false
     steps:
       - name: Check out exo-bot
         uses: actions/checkout@v7
@@ -28,9 +38,9 @@ jobs:
       - name: Run collect_lambda_logs
         id: collect
         env:
-          LAMBDA_LOG_GROUP: ${{ vars.LAMBDA_LOG_GROUP }}
-          LAMBDA_REPORTS_CHECKPOINT_MS: ${{ vars.LAMBDA_REPORTS_CHECKPOINT_MS }}
-          DEPLOYMENT_ENVIRONMENT: ${{ vars.DEPLOYMENT_ENVIRONMENT }}
+          LAMBDA_LOG_GROUP: ${{ vars[format('LAMBDA_LOG_GROUP{0}', matrix.suffix)] }}
+          LAMBDA_REPORTS_CHECKPOINT_MS: ${{ vars[format('LAMBDA_REPORTS_CHECKPOINT_MS{0}', matrix.suffix)] }}
+          DEPLOYMENT_ENVIRONMENT: ${{ vars[format('DEPLOYMENT_ENVIRONMENT{0}', matrix.suffix)] }}
           OTEL_EXPORTER_OTLP_ENDPOINT: ${{ vars.OTEL_EXPORTER_OTLP_ENDPOINT }}
           OTEL_EXPORTER_OTLP_HEADERS: Authorization=Basic%20${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}
         run: |
@@ -41,4 +51,4 @@ jobs:
         if: steps.collect.outputs.checkpoint_ms != ''
         env:
           GH_TOKEN: ${{ secrets.CHECKPOINT_TOKEN }}
-        run: gh variable set LAMBDA_REPORTS_CHECKPOINT_MS --body "${{ steps.collect.outputs.checkpoint_ms }}"
+        run: gh variable set LAMBDA_REPORTS_CHECKPOINT_MS${{ matrix.suffix }} --body "${{ steps.collect.outputs.checkpoint_ms }}"
